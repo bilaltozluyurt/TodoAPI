@@ -10,6 +10,8 @@ Projede **PostgreSQL** ve **SQL Server** olmak üzere iki farklı veritabanı de
 - [Genel Bakış](#genel-bakış)
 - [Mimari - Domain Driven Design (DDD)](#mimari---domain-driven-design-ddd)
 - [Çoklu Veritabanı Desteği ve Geçiş](#çoklu-veritabanı-desteği-ve-geçiş)
+- [Guid Id ve Veritabanları Arası Uyum](#guid-id-ve-veritabanları-arası-uyum)
+- [Migration'ları Import etmek](#migrationlar-ve-versiyonsuz-import)
 - [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
 - [API Özellikleri](#api-özellikleri)
 - [Lisans](#lisans)
@@ -63,7 +65,49 @@ Böylece tek bir kod tabanıyla istediğin veritabanına bağlanabilir, geçiş 
 Migration’lar iki veritabanı için de ayrı oluşturulabilir.
 
 ---
+## Guid Id ve Veritabanları Arası Uyum
 
+Projede Guid tipinde Id alanı kullanılmıştır ve bu alan, SQL Server’da uniqueidentifier, PostgreSQL’de ise uuid olarak karşılık bulur.
+
+SQL Server: Guid otomatik olarak uniqueidentifier türüne çevrilir.
+
+PostgreSQL: Guid tipi uuid olarak tanımlanır.
+
+Eğer projeyi PostgreSQL’den SQL Server’a (ya da tersi) geçirirken, eski migrationlar ve tablolar uyumsuzluk nedeniyle hata verebilir. Bunun sebebi, migrationların her veritabanı için ayrı ayrı oluşturulması gerektiğidir.
+
+Çözüm:
+
+Var olan migrationları ve veritabanı tablolarını silip temiz bir başlangıç yap.
+
+Daha sonra, hedef veritabanı için migrationları yeniden oluştur ve uygulayarak veritabanını baştan kur.
+
+Böylece Guid alanı doğru veri türüyle (PostgreSQL’de uuid, SQL Server’da uniqueidentifier) tanımlanır.
+
+Özetle: Migration’lar veritabanına özeldir, aynı migrationları farklı veritabanlarında kullanmak hata oluşturabilir. Bu yüzden veritabanı değiştirildiğinde migrationlar sıfırlanmalıdır.
+---
+## Migration'ları Import etmek
+
+Farklı veritabanları için migrationlar ayrı tutulmalıdır.
+Mevcut migrationları temizlemek için:
+```bash
+dotnet ef migrations remove
+```
+Eğer tüm migrationları ve veritabanını sıfırlamak istersen:
+
+1.Veritabanını sil veya resetle (örn. Docker konteynerini kaldırıp yeniden oluştur).
+
+2.Migration klasörlerini temizle (migration dosyalarını sil).
+
+3.Yeni veritabanı için migration oluştur:
+```bash
+dotnet ef migrations add InitialCreate
+```
+4.Migrationları uygula:
+```bash
+dotnet ef database update
+```
+Bu sayede, migrationlar hedef veritabanına uygun şekilde yeniden oluşturulur ve import edilir.
+---
 ## Kurulum ve Çalıştırma
 
 ### Gereksinimler
