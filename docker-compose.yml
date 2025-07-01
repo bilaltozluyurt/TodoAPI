@@ -1,0 +1,48 @@
+
+services:
+  tododdd-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+     
+      - ConnectionStrings:PostgresConnection=Host=postgres-db;Port=5432;Database=postgres;Username=postgres;Password=postgres
+      - ConnectionStrings:SqlServerConnection=Server=sqlserver-db,1433;Database=TodoItems;User Id=sa;Password=YourTrulyStrongP@ssw0rd!;TrustServerCertificate=True
+      - DatabaseProvider=postgres 
+    depends_on:
+      - postgres-db
+      - sqlserver-db
+    volumes:
+      - .:/app
+
+ 
+  postgres-db:
+    image: postgres:latest
+    container_name: tododdd-postgres-container
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  sqlserver-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: tododdd-sqlserver-container
+    environment:
+      SA_PASSWORD: "YourTrulyStrongP@ssw0rd!" 
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+volumes:
+  postgres_data:
+  sqlserver_data:
